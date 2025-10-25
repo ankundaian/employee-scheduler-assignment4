@@ -1,30 +1,60 @@
-const employees = ["Ian", "Racho", "John", "Mary", "Sarah", "Tom", "Liam"];
+// Employee list with shift preferences (1st = highest priority)
+const employees = {
+  Ian: ["Morning", "Afternoon", "Evening"],
+  Racho: ["Afternoon", "Morning", "Evening"],
+  John: ["Evening", "Morning", "Afternoon"],
+  Mary: ["Morning", "Evening", "Afternoon"],
+  Sarah: ["Afternoon", "Morning", "Evening"],
+  Tom: ["Evening", "Morning", "Afternoon"],
+  Liam: ["Morning", "Afternoon", "Evening"]
+};
+
 const shifts = ["Morning", "Afternoon", "Evening"];
 const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 let workedDays = {};
-employees.forEach(e => workedDays[e] = 0);
+Object.keys(employees).forEach(e => workedDays[e] = 0);
 
 let schedule = {};
 days.forEach(day => {
   schedule[day] = {};
+  shifts.forEach(shift => schedule[day][shift] = []);
+});
+
+// Assign based on employee shift preferences
+days.forEach(day => {
+  for (const emp in employees) {
+    if (workedDays[emp] >= 5) continue;
+    for (const pref of employees[emp]) {
+      if (schedule[day][pref].length < 2) {
+        schedule[day][pref].push(emp);
+        workedDays[emp]++;
+        break; // stop once assigned
+      }
+    }
+  }
+});
+
+// Fill missing slots randomly if needed
+days.forEach(day => {
   shifts.forEach(shift => {
-    // filter employees who worked < 5 days
-    let available = employees.filter(e => workedDays[e] < 5);
-    // shuffle array
-    available.sort(() => Math.random() - 0.5);
-    // pick 2 employees
-    let assigned = available.slice(0, 2);
-    assigned.forEach(e => workedDays[e]++);
-    schedule[day][shift] = assigned;
+    while (schedule[day][shift].length < 2) {
+      let available = Object.keys(employees).filter(
+        e => workedDays[e] < 5 && !schedule[day][shift].includes(e)
+      );
+      if (!available.length) break;
+      let pick = available[Math.floor(Math.random() * available.length)];
+      schedule[day][shift].push(pick);
+      workedDays[pick]++;
+    }
   });
 });
 
-// Output schedule
+// Output
 console.log("\n--- Weekly Schedule ---");
-for (const day of days) {
+days.forEach(day => {
   console.log(`\n${day}:`);
-  for (const shift of shifts) {
+  shifts.forEach(shift => {
     console.log(`  ${shift}: ${schedule[day][shift].join(", ")}`);
-  }
-}
+  });
+});
